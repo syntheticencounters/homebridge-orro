@@ -1,15 +1,15 @@
 {
-  "displayName": "Orro",
+  "displayName": "Homebridge Orro",
   "name": "homebridge-orro",
-  "version": "1.0.0",
-  "description": "A short description about what your plugin does.",
+  "version": "1.0.2",
+  "description": "Homebridge support for Orro lan switches.",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git://github.com/USERNAME/GITHUB_PROJECT_NAME.git"
+    "url": "git://github.com/syntheticencounters/homebridge-orro.git"
   },
   "bugs": {
-    "url": "https://github.com/USERNAME/GITHUB_PROJECT_NAME/issues"
+    "url": "https://github.com/syntheticencounters/homebridge-orro/issues"
   },
   "engines": {
     "node": ">=10.17.0",

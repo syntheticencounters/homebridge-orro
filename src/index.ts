@@ -4,8 +4,8 @@ import { PLATFORM_NAME } from './settings';
 import { OrroPlatform } from './platform';
 
 /**
- * This method registers the platform with Homebridge
- */
+* This method registers the platform with Homebridge
+*/
 export = (api: API) => {
-  api.registerPlatform(PLATFORM_NAME, OrroPlatform);
+    api.registerPlatform(PLATFORM_NAME, OrroPlatform);
 };

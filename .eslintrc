@@ -14,25 +14,25 @@
   ],
   "rules": {
     "quotes": ["warn", "single"],
-    "indent": ["warn", 2, { "SwitchCase": 1 }],
+    "indent": ["warn", 4, { "SwitchCase": 1 }],
     "semi": ["off"],
-    "comma-dangle": ["warn", "always-multiline"],
+    "comma-dangle": "off",
     "dot-notation": "off",
     "eqeqeq": "warn",
     "curly": ["warn", "all"],
     "brace-style": ["warn"],
     "prefer-arrow-callback": ["warn"],
-    "max-len": ["warn", 140],
+    "max-len": ["warn", 250],
     "no-console": ["warn"], // use the provided Homebridge log method instead
     "no-non-null-assertion": ["off"],
-    "comma-spacing": ["error"],
+    "comma-spacing": ["off"],
     "no-multi-spaces": ["warn", { "ignoreEOLComments": true }],
     "no-trailing-spaces": ["warn"],
     "lines-between-class-members": ["warn", "always", {"exceptAfterSingleLine": true}],
     "@typescript-eslint/explicit-function-return-type": "off",
     "@typescript-eslint/no-non-null-assertion": "off",
     "@typescript-eslint/explicit-module-boundary-types": "off",
-    "@typescript-eslint/semi": ["warn"],
+    "@typescript-eslint/semi": ["off"],
     "@typescript-eslint/member-delimiter-style": ["warn"]
   }
 }

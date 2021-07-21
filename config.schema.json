@@ -1,35 +1,71 @@
 {
-  "pluginAlias": "Orro",
-  "pluginType": "platform",
-  "singular": true,
-  "schema": {
-    "type": "object",
-    "properties": {
-      "homeID": {
-        "title": "Home ID",
-        "type": "string",
-        "required": true
-      },
-      "serialNumber": {
-        "title": "Serial Number",
-        "type": "string",
-        "required": true
-      },
-      "switchID": {
-        "title": "Switch ID",
-        "type": "string",
-        "required": true
-      },
-      "ipAddress": {
-        "title": "IP Address",
-        "type": "string",
-        "required": true
-      },
-      "accessToken": {
-        "title": "Offline Access Token",
-        "type": "string",
-        "required": true
-      }
-    }
-  }
+    "pluginAlias": "Homebridge Orro",
+    "pluginType": "platform",
+    "singular": true,
+    "headerDisplay": "Add one or more switches from your Orro network below",
+    "schema": {
+        "homeID": {
+            "title": "Home ID",
+            "type": "string",
+            "required": true
+        },
+        "accessToken": {
+            "title": "Offline Access Token",
+            "type": "string",
+            "required": true
+        },
+        "switches": {
+            "type": "array",
+            "items": {
+                "title": "Switches",
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "title": "Name",
+                        "type": "string",
+                        "required": true
+                    },
+                    "serialNumber": {
+                        "title": "Serial Number",
+                        "type": "string",
+                        "required": true
+                    },
+                    "switchID": {
+                        "title": "Switch ID",
+                        "type": "string",
+                        "required": true
+                    },
+                    "ipAddress": {
+                        "title": "IP Address",
+                        "type": "string",
+                        "required": true
+                    }
+                }
+            }
+        }
+    },
+    "layout": [
+        {
+            "key": "config",
+            "type": "section",
+            "title": "Configuration",
+            "expandable": false,
+            "items": [
+                "homeID",
+                "accessToken"
+            ]
+        },
+        {
+            "key": "switches",
+            "type": "array",
+            "orderable": false,
+            "buttonText": "Add Switch",
+            "items": [
+                "switches[].name",
+                "switches[].serialNumber",
+                "switches[].switchID",
+                "switches[].ipAddress"
+            ]
+        }
+    ]
 }
