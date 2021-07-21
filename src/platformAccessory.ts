@@ -1,34 +1,41 @@
-import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
-
-import { ExampleHomebridgePlatform } from './platform';
+import { CharacteristicValue, PlatformAccessory, PlatformConfig, Service } from 'homebridge';
+import { OrroPlatform } from './platform';
+import { client as WebSocketClient } from 'websocket';
 
 /**
  * Platform Accessory
  * An instance of this class is created for each accessory your platform registers
  * Each accessory may expose multiple services of different service types.
  */
-export class ExamplePlatformAccessory {
+export class Switch {
   private service: Service;
 
   /**
    * These are just used to create a working example
    * You should implement your own code to track the state of your accessory
    */
-  private exampleStates = {
-    On: false,
-    Brightness: 100,
+  private state = {
+      On: false,
+      Brightness: 100
   };
 
+  private connection: WebSocketClient;
+  private serialNumber = '10000B0C0003Z';
+  private switchIP = '192.168.7.125';
+  private switchID = 'de1bc286-51f7-480e-b702-7957b9952618';
+  private homeID = '3debeb6b-023d-4dba-8e70-92663b6d2610';
+  private accessToken = 'YxqRX78eQU_gyzdftPmOG_7n261njz2NFF3hgckXEyQjZGi7qS1RBGdeGhjIb0gYKRKA_wMqeu8RdG9Aybaz1Q';
+
   constructor(
-    private readonly platform: ExampleHomebridgePlatform,
+    private readonly platform: OrroPlatform,
     private readonly accessory: PlatformAccessory,
   ) {
 
     // set accessory information
     this.accessory.getService(this.platform.Service.AccessoryInformation)!
-      .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Default-Manufacturer')
-      .setCharacteristic(this.platform.Characteristic.Model, 'Default-Model')
-      .setCharacteristic(this.platform.Characteristic.SerialNumber, 'Default-Serial');
+      .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Orro')
+      .setCharacteristic(this.platform.Characteristic.Model, 'Switch')
+      .setCharacteristic(this.platform.Characteristic.SerialNumber, this.serialNumber);
 
     // get the LightBulb service if it exists, otherwise create a new LightBulb service
     // you can create multiple services for each accessory
@@ -49,56 +56,53 @@ export class ExamplePlatformAccessory {
     // register handlers for the Brightness Characteristic
     this.service.getCharacteristic(this.platform.Characteristic.Brightness)
       .onSet(this.setBrightness.bind(this));       // SET - bind to the 'setBrightness` method below
-
-    /**
-     * Creating multiple services of the same type.
-     *
-     * To avoid "Cannot add a Service with the same UUID another Service without also defining a unique 'subtype' property." error,
-     * when creating multiple services of the same type, you need to use the following syntax to specify a name and subtype id:
-     * this.accessory.getService('NAME') || this.accessory.addService(this.platform.Service.Lightbulb, 'NAME', 'USER_DEFINED_SUBTYPE_ID');
-     *
-     * The USER_DEFINED_SUBTYPE must be unique to the platform accessory (if you platform exposes multiple accessories, each accessory
-     * can use the same sub type id.)
-     */
-
-    // Example: add two "motion sensor" services to the accessory
-    const motionSensorOneService = this.accessory.getService('Motion Sensor One Name') ||
-      this.accessory.addService(this.platform.Service.MotionSensor, 'Motion Sensor One Name', 'YourUniqueIdentifier-1');
-
-    const motionSensorTwoService = this.accessory.getService('Motion Sensor Two Name') ||
-      this.accessory.addService(this.platform.Service.MotionSensor, 'Motion Sensor Two Name', 'YourUniqueIdentifier-2');
-
-    /**
-     * Updating characteristics values asynchronously.
-     *
-     * Example showing how to update the state of a Characteristic asynchronously instead
-     * of using the `on('get')` handlers.
-     * Here we change update the motion sensor trigger states on and off every 10 seconds
-     * the `updateCharacteristic` method.
-     *
-     */
-    let motionDetected = false;
-    setInterval(() => {
-      // EXAMPLE - inverse the trigger
-      motionDetected = !motionDetected;
-
-      // push the new value to HomeKit
-      motionSensorOneService.updateCharacteristic(this.platform.Characteristic.MotionDetected, motionDetected);
-      motionSensorTwoService.updateCharacteristic(this.platform.Characteristic.MotionDetected, !motionDetected);
-
-      this.platform.log.debug('Triggering motionSensorOneService:', motionDetected);
-      this.platform.log.debug('Triggering motionSensorTwoService:', !motionDetected);
-    }, 10000);
   }
+
+  getConnection = new Promise<string>((resolve, reject) => {
+      if(this.connection) {
+          resolve(this.connection);
+      }
+      const client = new WebSocketClient();
+      client.connect(`ws://${this.switchIP}:8080/edison/${this.homeID}`, null, null, [{ 'offline-access-token': this.accessToken }]);
+      client.on('connect', connection => {
+
+          // listen for system events
+          connection.on('message', data => {
+              try {
+                  const json = JSON.parse(data.utf8Data);
+                  if(typeof(json.data.onOff) === 'boolean') {
+                      this.state.On = json.data.onOff;
+                  }
+              } catch(e) {
+                  console.log(e.message);
+              }
+          });
+
+          this.connection = connection;
+          resolve(connection);
+      })
+      client.on('error', error => {
+          reject(error);
+          this.connection = null;
+      });
+  })
 
   /**
    * Handle "SET" requests from HomeKit
    * These are sent when the user changes the state of an accessory, for example, turning on a Light bulb.
    */
   async setOn(value: CharacteristicValue) {
-    // implement your own code to turn your device on/off
-    this.exampleStates.On = value as boolean;
-
+    const payload = JSON.stringify({
+        targetId: this.switchID,
+        clientId: 'homebridge-orro',
+        type: 'RemoteCommand',
+        timestamp: Date.now(),
+        data: {
+            command: value ? 'on' : 'off'
+        }
+    });
+    this.connection.sendUTF(payload);
+    this.state.On = value as boolean;
     this.platform.log.debug('Set Characteristic On ->', value);
   }
 
@@ -116,15 +120,9 @@ export class ExamplePlatformAccessory {
    * this.service.updateCharacteristic(this.platform.Characteristic.On, true)
    */
   async getOn(): Promise<CharacteristicValue> {
-    // implement your own code to check if the device is on
-    const isOn = this.exampleStates.On;
-
-    this.platform.log.debug('Get Characteristic On ->', isOn);
-
-    // if you need to return an error to show the device as "Not Responding" in the Home app:
-    // throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
-
-    return isOn;
+      const isOn = this.state.On;
+      this.platform.log.debug('Get Characteristic On ->', isOn);
+      return isOn;
   }
 
   /**
@@ -132,10 +130,19 @@ export class ExamplePlatformAccessory {
    * These are sent when the user changes the state of an accessory, for example, changing the Brightness
    */
   async setBrightness(value: CharacteristicValue) {
-    // implement your own code to set the brightness
-    this.exampleStates.Brightness = value as number;
-
-    this.platform.log.debug('Set Characteristic Brightness -> ', value);
+      const payload = JSON.stringify({
+          targetId: this.switchID,
+          clientId: 'homebridge-orro',
+          type: 'RemoteCommand',
+          timestamp: Date.now(),
+          data: {
+              command: 'dimmer_set',
+              value: value
+          }
+      });
+      this.connection.sendUTF(payload);
+      this.state.Brightness = value as number;
+      this.platform.log.debug('Set Characteristic Brightness -> ', value);
   }
 
 }
