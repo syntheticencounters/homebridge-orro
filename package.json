@@ -1,7 +1,7 @@
 {
   "displayName": "Homebridge Orro",
   "name": "homebridge-orro",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Homebridge support for Orro lan switches.",
   "license": "Apache-2.0",
   "repository": {
