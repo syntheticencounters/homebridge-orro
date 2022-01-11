@@ -58,13 +58,17 @@ export class Switch {
     connect = async () => {
 
         const client = new WebSocketClient();
+        this.platform.log.info('Connecting to:', `ws://${this.accessory.context.device.ipAddress}:8080/edison/${this.platform.config.homeID}`);
         client.connect(`ws://${this.accessory.context.device.ipAddress}:8080/edison/${this.platform.config.homeID}`, null, null, [{ 'offline-access-token': this.platform.config.accessToken }]);
         client.on('connect', connection => {
+
+            this.platform.log.info(`Connected to ${this.accessory.context.device.name}`);
 
             // listen for system events
             connection.on('message', response => {
                 try {
                     const { data } = JSON.parse(response.utf8Data);
+                    this.platform.log.info(data);
                     const { dimmerLevel, onOff } = data || {};
 
                     // update on/off state if changed externally
